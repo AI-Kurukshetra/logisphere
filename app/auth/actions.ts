@@ -128,7 +128,11 @@ async function syncProfileFromAuth(
   if (
     !profile.company_id &&
     profile.role !== desiredRole &&
-    (profile.role === "viewer" || desiredRole === "admin")
+    (profile.role === "viewer" ||
+      desiredRole === "admin" ||
+      ["billing_manager", "supply_chain_manager", "drivers_carriers"].includes(
+        profile.role
+      ))
   ) {
     updatePayload.role = desiredRole;
   }
