@@ -181,7 +181,7 @@ export default async function AuthPage({
                         name="avatar"
                         type="file"
                         accept="image/*"
-                        className="auth-input file:mr-3 file:rounded-full file:border-0 file:bg-[color:var(--brand-ink)] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white"
+                        className="auth-input file:mr-3 file:rounded-full file:border-0 file:bg-[color:var(--brand-ink)] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white file:cursor-pointer hover:file:bg-[color:var(--accent)]"
                       />
                       <p className="mt-2 text-xs text-[color:var(--muted)]">
                         Optional. Uploaded to Supabase Storage and used as your profile photo.
