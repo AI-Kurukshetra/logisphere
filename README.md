@@ -1,8 +1,25 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Logisphere
+
+Freight Intelligence Platform — AI-powered logistics analytics & audit suite (see [plan.md](./plan.md)).
+
+**Stack:** Next.js (frontend) · Supabase (backend) · Vercel (deployment)
 
 ## Getting Started
 
-First, run the development server:
+1. **Clone and install**
+
+   ```bash
+   npm install
+   ```
+
+2. **Supabase**
+
+   - Create a project at [supabase.com](https://supabase.com).
+   - Copy `.env.example` to `.env.local` and set:
+     - `NEXT_PUBLIC_SUPABASE_URL`
+     - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+3. **Run the development server**
 
 ```bash
 npm run dev
@@ -31,6 +48,8 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Push the repo to GitHub and import the project in [Vercel](https://vercel.com/new).
+2. Add environment variables in Vercel (same as `.env.local`):
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+3. Deploy; Vercel will use the Next.js build automatically (see `vercel.json`).

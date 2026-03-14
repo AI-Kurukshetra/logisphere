@@ -1,0 +1,1 @@
+7d:{"name":"OnboardingErrorDisplay","key":null,"env":"Server","owner":"$2d","stack":[["OnboardingPage","/Users/mac/projects/next/logisphere/.next/dev/server/chunks/ssr/[root-of-the-server]__691cf4db._.js",310,289,163,1,false]],"props":{"error":"Unable to create the company workspace."}}
