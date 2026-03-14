@@ -1,0 +1,27 @@
+{
+  "scripts": {
+    "record": "ts-node puppeteer-recorder.ts",
+    "remotion-preview": "remotion preview remotion-composer.tsx LogisphereWalkthrough",
+    "remotion-render": "remotion render remotion-composer.tsx LogisphereWalkthrough logisphere-walkthrough.mp4",
+    "remotion-render-webm": "remotion render --codec=vp9 remotion-composer.tsx LogisphereWalkthrough logisphere-walkthrough.webm",
+    "remotion-render-prores": "remotion render --codec=prores remotion-composer.tsx LogisphereWalkthrough logisphere-walkthrough.mov",
+    "generate-audio": "ts-node tts-generator.ts",
+    "full-video-pipeline": "npm run record && npm run remotion-render",
+    "clean": "rm -rf screenshots/ metadata.json output.mp4"
+  },
+  "dependencies": {
+    "puppeteer": "^21.0.0",
+    "remotion": "^4.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0",
+    "@types/node": "^20.0.0"
+  },
+  "optional": {
+    "google-tts-api": "^2.0.0",
+    "elevenlabs": "^0.2.0"
+  }
+}
