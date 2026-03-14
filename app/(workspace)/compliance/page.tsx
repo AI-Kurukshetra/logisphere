@@ -3,7 +3,7 @@ import { requirePermission } from "@/lib/supabase/session";
 type ContractComplianceRow = {
   id: string;
   carrier_id: string;
-  carriers: { name: string | null } | null;
+  carriers: { name: string | null }[] | null;
   sla: { on_time_percent?: number } | null;
 };
 
@@ -107,7 +107,7 @@ export default async function CompliancePage() {
       return {
         actualRate,
         carrierId: contract.carrier_id,
-        carrierName: contract.carriers?.name || "Unknown Carrier",
+        carrierName: contract.carriers?.[0]?.name || "Unknown Carrier",
         contractId: contract.id,
         isBreaching,
         slaPercent,
