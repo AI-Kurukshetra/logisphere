@@ -673,9 +673,9 @@ export function LogisticsManagerDashboard({
                 Scorecards will render once carriers and shipments are present in company scope.
               </div>
             ) : (
-              carrierScores.slice(0, 5).map((carrier) => (
+              carrierScores.slice(0, 5).map((carrier, idx) => (
                 <div
-                  key={carrier.name}
+                  key={`${carrier.name}-${carrier.metricSource}-${idx}`}
                   className="rounded-[1.4rem] border border-slate-200/80 bg-slate-50 p-4"
                 >
                   <div className="flex items-start justify-between gap-4">
