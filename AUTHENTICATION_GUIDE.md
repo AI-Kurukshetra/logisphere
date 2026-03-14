@@ -262,33 +262,25 @@ After Authentication:
 ### For Testing Purposes
 
 **Current Demo Mode:**
-- Any email format (user@company.com)
+- Any email format (work email)
 - Any password (6+ characters)
 - Choose any role from dropdown
 
-**Example Users to Create:**
+**User Types to Create:**
 
-1. **Admin User**
-   - Email: `admin@company.com`
-   - Password: `Admin123`
+1. **Administrator**
    - Role: Administrator
    - Access: `/admin/login`, `/admin/dashboard`
 
 2. **Finance Manager**
-   - Email: `finance@company.com`
-   - Password: `Finance123`
    - Role: Finance Manager
    - Access: Invoice auditing, payments, analytics
 
 3. **Operations Manager**
-   - Email: `ops@company.com`
-   - Password: `Ops123`
    - Role: Operations Manager
    - Access: Shipment tracking, carrier management
 
 4. **Viewer**
-   - Email: `viewer@company.com`
-   - Password: `Viewer123`
    - Role: Viewer
    - Access: Read-only dashboards, reports
 

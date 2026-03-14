@@ -64,23 +64,23 @@ export default async function AnalyticsPage() {
   const audits = (auditsRes.data ?? []).filter((audit) => invoiceIds.has(audit.invoice_id));
   const shipments = shipmentsRes.data ?? [];
 
-  const totalFreightSpend = invoices.reduce((sum, invoice) => sum + Number(invoice.amount), 0);
+  const totalFreightSpend = invoices.reduce((sum: number, invoice) => sum + Number(invoice.amount), 0);
   const pendingLiability = invoices
     .filter((invoice) => invoice.status !== "paid")
-    .reduce((sum, invoice) => sum + Number(invoice.amount), 0);
+    .reduce((sum: number, invoice) => sum + Number(invoice.amount), 0);
   const exceptionExposure = invoices
     .filter((invoice) => ["exception", "disputed"].includes(invoice.status))
-    .reduce((sum, invoice) => sum + Number(invoice.amount), 0);
+    .reduce((sum: number, invoice) => sum + Number(invoice.amount), 0);
   const auditedInvoiceCount = new Set(audits.map((audit) => audit.invoice_id)).size;
   const auditCoverage = invoices.length ? (auditedInvoiceCount / invoices.length) * 100 : 0;
   const unreadAlerts = alerts.filter((alert) => !alert.read).length;
   const shipmentExceptionRate = shipments.length
     ? (shipments.filter((shipment) => shipment.status === "exception").length / shipments.length) * 100
     : 0;
-  const recoveredVariance = audits.reduce((sum, audit) => sum + Number(audit.variance_amount ?? 0), 0);
+  const recoveredVariance = audits.reduce((sum: number, audit) => sum + Number(audit.variance_amount ?? 0), 0);
   const completedPayments = payments.filter((payment) => payment.status === "completed");
   const completedPaymentTotal = completedPayments.reduce(
-    (sum, payment) => sum + Number(payment.amount),
+    (sum: number, payment) => sum + Number(payment.amount),
     0
   );
 

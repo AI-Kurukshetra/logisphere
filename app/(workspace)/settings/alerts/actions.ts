@@ -236,6 +236,8 @@ export async function evaluateAlertRulesAction() {
     action: "alert_rules.evaluated",
     actorProfileId: profile!.id,
     companyId: company!.id,
+    entityId: "batch_evaluation",
+    entityType: "alert_rule",
     metadata: { triggeredCount, emailsSent: emailCount, totalRules: rules.length },
     summary: `Evaluated ${rules.length} alert rule(s), triggered ${triggeredCount}.`,
   });

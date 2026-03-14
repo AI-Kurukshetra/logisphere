@@ -10,6 +10,10 @@ export type EvaluationResult = {
 
 type AlertRule = Database["public"]["Tables"]["alert_rules"]["Row"];
 type SupabaseClient = any;
+type Invoice = { amount: number | string };
+type Carrier = { id: string; on_time_rate: number | null };
+type InvoiceWithDueDate = { id: string; due_date: string };
+type Contract = { id: string; carrier_id: string; sla: any };
 
 export async function evaluateCostOverrun(
   supabase: SupabaseClient,
@@ -44,7 +48,7 @@ export async function evaluateCostOverrun(
     .lte("created_at", endOfMonth);
 
   const actualAmount = invoices?.reduce(
-    (sum, inv) => sum + (inv.amount || 0),
+    (sum: number, inv: Invoice) => sum + (Number(inv.amount) || 0),
     0
   ) ?? 0;
 
@@ -93,19 +97,19 @@ export async function evaluateServiceFailure(
   const { data: metrics } = await query;
 
   const failedCarriers =
-    metrics?.filter((m) => (m.on_time_rate || 0) < rule.threshold) ?? [];
+    metrics?.filter((m: Carrier) => (m.on_time_rate || 0) < rule.threshold) ?? [];
 
   return {
     triggered: failedCarriers.length > 0,
     title: "Service Failure Alert",
     message: `${failedCarriers.length} carrier(s) have on-time rate below ${rule.threshold}%. ${failedCarriers
-      .map((f) => `${(f as any).carriers?.name || "Unknown"}: ${f.on_time_rate}%`)
+      .map((f: Carrier) => `${(f as any).carriers?.name || "Unknown"}: ${f.on_time_rate}%`)
       .join(", ")}`,
     type: "service_failure",
     metadata: {
       failedCarrierCount: failedCarriers.length,
-      failedCarriers: failedCarriers.map((f) => ({
-        carrierId: f.carrier_id,
+      failedCarriers: failedCarriers.map((f: Carrier) => ({
+        carrierId: f.id,
         carrierName: (f as any).carriers?.name,
         onTimeRate: f.on_time_rate,
       })),
@@ -161,7 +165,7 @@ export async function evaluatePaymentDelay(
     .toISOString()
     .split("T")[0];
 
-  const severelyOverdue = overdue?.filter((inv) => inv.due_date <= daysAgo) ?? [];
+  const severelyOverdue = overdue?.filter((inv: InvoiceWithDueDate) => inv.due_date <= daysAgo) ?? [];
 
   return {
     triggered: severelyOverdue.length > 0,
@@ -212,7 +216,7 @@ export async function evaluateCarrierSla(
     type: "carrier_sla",
     metadata: {
       breachCount: breaches.length,
-      breaches: breaches.map((b) => ({
+      breaches: breaches.map((b: Contract) => ({
         contractId: b.id,
         carrierId: b.carrier_id,
         carrierName: (b as any).carriers?.name,
