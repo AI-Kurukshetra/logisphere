@@ -26,37 +26,28 @@ function getInitialTheme(): Theme {
     return "light";
   }
 
-  const storedTheme = window.localStorage.getItem(STORAGE_KEY);
-  if (storedTheme === "light" || storedTheme === "dark") {
-    return storedTheme;
-  }
-
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  // Always use light theme, ignore stored preferences and system settings
+  return "light";
 }
 
 export function ThemeProvider({ children }: Readonly<{ children: ReactNode }>) {
-  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  // Always use light theme
+  const [theme] = useState<Theme>("light");
 
   useEffect(() => {
     const root = document.documentElement;
 
     root.classList.remove("light", "dark");
-    root.classList.add(theme);
-    root.style.colorScheme = theme;
-    window.localStorage.setItem(STORAGE_KEY, theme);
-  }, [theme]);
+    root.classList.add("light");
+    root.style.colorScheme = "light";
+  }, []);
 
   return (
     <ThemeContext.Provider
       value={{
-        theme,
-        setTheme,
-        toggleTheme: () =>
-          setTheme((currentTheme) =>
-            currentTheme === "light" ? "dark" : "light"
-          ),
+        theme: "light",
+        setTheme: () => {}, // No-op: always light
+        toggleTheme: () => {}, // No-op: always light
       }}
     >
       {children}

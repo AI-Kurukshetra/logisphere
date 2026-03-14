@@ -77,8 +77,11 @@ export async function POST(request: Request) {
       .select("role")
       .eq("id", user.id)
       .maybeSingle();
-    // During onboarding, the first user must be admin
-    const onboardingRole: UserRole = "admin";
+    // Infer the role from signup selection, but default to admin if needed
+    const onboardingRole = inferOnboardingRole(
+      existingProfile?.role,
+      user.user_metadata?.role
+    );
 
     // Validation
     if (
@@ -148,7 +151,7 @@ export async function POST(request: Request) {
         id: user.id,
         job_title: data.jobTitle || null,
         region_id: null,
-        role: onboardingRole,
+        role: "admin",
       },
       {
         onConflict: "id",
@@ -277,6 +280,29 @@ export async function POST(request: Request) {
 
     addLog("success", "Profile scope assigned");
 
+    // Restore user's selected role if different from admin
+    if (onboardingRole !== "admin") {
+      const { error: restoreRoleError } = await supabase
+        .from("profiles")
+        .update({
+          role: onboardingRole,
+        })
+        .eq("id", user.id);
+
+      if (restoreRoleError) {
+        addLog("error", "Profile role restore failed", {
+          error: restoreRoleError.message,
+          code: restoreRoleError.code,
+          details: restoreRoleError.details,
+        });
+        return NextResponse.json(
+          { error: "Workspace created, but your selected role could not be restored.", logs },
+          { status: 400 }
+        );
+      }
+      addLog("success", "Profile role restored to user selection", { role: onboardingRole });
+    }
+
     // Log Activity
     addLog("info", "Logging activity");
 
@@ -290,6 +316,7 @@ export async function POST(request: Request) {
         businessUnitId: businessUnit.id,
         facilityId: facility.id,
         regionId: region.id,
+        role: onboardingRole,
       },
       summary: `Completed onboarding and created ${data.companyName} with its initial hierarchy.`,
     });

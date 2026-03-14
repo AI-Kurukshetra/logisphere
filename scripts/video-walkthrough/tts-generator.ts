@@ -2,12 +2,7 @@
  * Text-to-Speech Audio Generator
  * Generates narration audio for each page script
  *
- * Usage: npx ts-node tts-generator.ts
- *
- * Supports multiple TTS providers:
- * - Google TTS (free, but limited)
- * - ElevenLabs (high quality, paid)
- * - AWS Polly (professional, paid)
+ * Usage: npx ts-node tts-generator.ts google|elevenlabs|aws [apikey]
  */
 
 import path from "path";
@@ -16,7 +11,10 @@ import https from "https";
 import { pageScripts } from "./page-scripts";
 
 const AUDIO_DIR = path.join(process.cwd(), "scripts/video-walkthrough/audio");
-const METADATA_FILE = path.join(process.cwd(), "scripts/video-walkthrough/audio-metadata.json");
+const METADATA_FILE = path.join(
+  process.cwd(),
+  "scripts/video-walkthrough/audio-metadata.json"
+);
 
 // Ensure audio directory exists
 function ensureDir(dir: string) {
@@ -36,8 +34,29 @@ function slugify(text: string): string {
 }
 
 /**
+ * Download file from URL
+ */
+function downloadFile(url: string, filepath: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(filepath);
+
+    https
+      .get(url, (response) => {
+        response.pipe(file);
+        file.on("finish", () => {
+          file.close();
+          resolve();
+        });
+      })
+      .on("error", (err) => {
+        fs.unlink(filepath, () => {});
+        reject(err);
+      });
+  });
+}
+
+/**
  * Google TTS - Free option (rate limited)
- * Requires: npm install google-tts-api
  */
 async function generateWithGoogleTTS(): Promise<void> {
   try {
@@ -66,7 +85,6 @@ async function generateWithGoogleTTS(): Promise<void> {
           host: "https://translate.google.com",
         });
 
-        // Download MP3 from URL
         await downloadFile(url, audioPath);
 
         // Estimate duration (rough: ~150 words per minute)
@@ -102,13 +120,14 @@ async function generateWithGoogleTTS(): Promise<void> {
 
     console.log("\n✅ Audio generation complete!");
   } catch (error) {
-    console.error("❌ Google TTS not installed. Install with: npm install google-tts-api");
+    console.error(
+      "❌ Google TTS not installed. Install with: npm install google-tts-api"
+    );
   }
 }
 
 /**
- * ElevenLabs TTS - High quality option (requires API key)
- * Requires: npm install elevenlabs
+ * ElevenLabs TTS - High quality option
  */
 async function generateWithElevenLabs(apiKey: string): Promise<void> {
   try {
@@ -134,22 +153,18 @@ async function generateWithElevenLabs(apiKey: string): Promise<void> {
       try {
         const audio = await client.generate({
           text: script.narration,
-          voice_id: "21m00Tcm4TlvDq8ikWAM", // Professional male voice
+          voice_id: "21m00Tcm4TlvDq8ikWAM",
           model_id: "eleven_monolingual_v1",
         });
 
-        // Save audio buffer
         const buffer = Buffer.from(audio.audio_bytes, "binary");
         fs.writeFileSync(audioPath, buffer);
-
-        // Use ElevenLabs reported duration
-        const estimatedDuration = script.duration;
 
         audioMetadata.push({
           route: script.route,
           title: script.title,
           audioPath,
-          duration: estimatedDuration,
+          duration: script.duration,
         });
 
         console.log(`  ✅ Saved: ${audioPath}`);
@@ -174,13 +189,14 @@ async function generateWithElevenLabs(apiKey: string): Promise<void> {
 
     console.log("\n✅ Audio generation complete!");
   } catch (error) {
-    console.error("❌ ElevenLabs not installed. Install with: npm install elevenlabs");
+    console.error(
+      "❌ ElevenLabs not installed. Install with: npm install elevenlabs"
+    );
   }
 }
 
 /**
- * AWS Polly TTS - Professional option (requires AWS credentials)
- * Requires: npm install aws-sdk
+ * AWS Polly TTS - Professional option
  */
 async function generateWithAWSPolly(): Promise<void> {
   try {
@@ -207,21 +223,17 @@ async function generateWithAWSPolly(): Promise<void> {
         const params = {
           Text: script.narration,
           OutputFormat: "mp3",
-          VoiceId: "Joanna", // Professional female voice
+          VoiceId: "Joanna",
         };
 
         const response = await polly.synthesizeSpeech(params).promise();
-
-        // Save audio file
         fs.writeFileSync(audioPath, response.AudioStream);
-
-        const estimatedDuration = script.duration;
 
         audioMetadata.push({
           route: script.route,
           title: script.title,
           audioPath,
-          duration: estimatedDuration,
+          duration: script.duration,
         });
 
         console.log(`  ✅ Saved: ${audioPath}`);
@@ -246,30 +258,10 @@ async function generateWithAWSPolly(): Promise<void> {
 
     console.log("\n✅ Audio generation complete!");
   } catch (error) {
-    console.error("❌ AWS SDK not installed. Install with: npm install aws-sdk");
+    console.error(
+      "❌ AWS SDK not installed. Install with: npm install aws-sdk"
+    );
   }
-}
-
-/**
- * Download file from URL
- */
-function downloadFile(url: string, filepath: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const file = fs.createWriteStream(filepath);
-
-    https
-      .get(url, (response) => {
-        response.pipe(file);
-        file.on("finish", () => {
-          file.close();
-          resolve();
-        });
-      })
-      .on("error", (err) => {
-        fs.unlink(filepath, () => {}); // Delete partial file
-        reject(err);
-      });
-  });
 }
 
 /**
@@ -291,7 +283,9 @@ async function main() {
 
     case "elevenlabs":
       if (!apiKey) {
-        console.error("❌ ElevenLabs API key required: npx ts-node tts-generator.ts elevenlabs YOUR_API_KEY");
+        console.error(
+          "❌ ElevenLabs API key required: npx ts-node tts-generator.ts elevenlabs YOUR_API_KEY"
+        );
         process.exit(1);
       }
       await generateWithElevenLabs(apiKey);

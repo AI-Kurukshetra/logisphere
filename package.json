@@ -6,7 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:playwright": "playwright test",
+    "test:playwright:ui": "playwright test --ui",
+    "record:walkthrough": "playwright test --project=chromium tests/walkthrough.spec.ts",
+    "generate:narration": "ts-node scripts/generate-narration.ts",
+    "merge:video": "ts-node scripts/merge-video-audio.ts",
+    "create:demo": "npm run record:walkthrough && npm run generate:narration && npm run merge:video"
   },
   "dependencies": {
     "@supabase/ssr": "^0.9.0",
@@ -17,13 +23,23 @@
     "recharts": "^2.15.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
+    "@types/fluent-ffmpeg": "^2.1.4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1",
+    "elevenlabs": "^0.2.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "fluent-ffmpeg": "^2.1.3",
+    "glob": "^10.3.10",
+    "puppeteer": "^21.11.0",
+    "remotion": "^4.0.435",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }

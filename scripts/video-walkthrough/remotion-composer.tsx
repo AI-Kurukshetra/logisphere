@@ -1,72 +1,83 @@
 /**
  * Remotion Video Composer
- * Combines screenshots, narration, music, and branding into professional video
- * Usage: npm run remotion-compose
+ * Combines screenshots into a professional video with transitions
  */
 
-import React from "react";
 import {
-  Composition,
-  Sequence,
   AbsoluteFill,
-  useCurrentFrame,
+  useVideoConfig,
+  Sequence,
   interpolate,
   Easing,
+  Video,
 } from "remotion";
-import path from "path";
 import fs from "fs";
+import path from "path";
 
-// Types
-interface FrameData {
+interface FrameMetadata {
+  page: string;
+  route: string;
+  title: string;
+  frameIndex: number;
   timestamp: number;
-  imagePath: string;
-  narration?: string;
-  duration: number;
 }
 
-interface VideoMetadata {
+interface MetadataFile {
   totalFrames: number;
-  totalDuration: number;
   fps: number;
-  resolution: { width: number; height: number };
-  pages: Array<{
-    pageIndex: number;
-    route: string;
-    title: string;
-    frameCount: number;
-    duration: number;
-  }>;
-  frames: FrameData[];
-  screenshotsDir: string;
-  timestamp: string;
+  estimatedDuration: number;
+  generatedAt: string;
+  frames: FrameMetadata[];
 }
 
 // Load metadata
-const metadataPath = path.join(process.cwd(), "scripts/video-walkthrough/metadata.json");
-const metadata: VideoMetadata = JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
+const metadataPath = path.join(
+  process.cwd(),
+  "scripts/video-walkthrough/metadata.json"
+);
+const metadata: MetadataFile = JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
+
+const screenshotDir = path.join(
+  process.cwd(),
+  "scripts/video-walkthrough/screenshots"
+);
 
 /**
- * Frame Component - Displays screenshot with transitions
+ * Individual frame component with fade transition
  */
-const ScreenshotFrame: React.FC<{
+interface ScreenshotFrameProps {
   imagePath: string;
-  duration: number;
-  title?: string;
-}> = ({ imagePath, duration, title }) => {
-  const frame = useCurrentFrame();
-  const fps = 30; // Remotion default
+  fadeInFrames?: number;
+  fadeOutFrames?: number;
+}
 
-  // Fade in/out transitions
-  const fadeInOpacity = interpolate(frame, [0, 15], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
+const ScreenshotFrame: React.FC<ScreenshotFrameProps> = ({
+  imagePath,
+  fadeInFrames = 15,
+  fadeOutFrames = 15,
+}) => {
+  const { frame } = useVideoConfig();
 
+  // Fade in from black
+  const fadeInOpacity = interpolate(
+    frame,
+    [0, fadeInFrames],
+    [0, 1],
+    {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+    }
+  );
+
+  // Fade out to black
   const fadeOutOpacity = interpolate(
     frame,
-    [Math.max(0, duration * fps - 15), duration * fps],
+    [metadata.totalFrames - fadeOutFrames, metadata.totalFrames],
     [1, 0],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+    {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+    }
   );
 
   const opacity = Math.min(fadeInOpacity, fadeOutOpacity);
@@ -76,191 +87,244 @@ const ScreenshotFrame: React.FC<{
       style={{
         backgroundColor: "#000",
         display: "flex",
-        justifyContent: "center",
         alignItems: "center",
-        opacity,
+        justifyContent: "center",
       }}
     >
       <img
-        src={`file://${imagePath}`}
+        src={imagePath}
         style={{
           width: "100%",
           height: "100%",
-          objectFit: "cover",
+          objectFit: "contain",
+          opacity,
         }}
+        alt="walkthrough"
       />
-
-      {/* Optional title overlay */}
-      {title && (
-        <div
-          style={{
-            position: "absolute",
-            bottom: 40,
-            left: 40,
-            color: "white",
-            fontSize: 32,
-            fontWeight: "bold",
-            textShadow: "0 2px 10px rgba(0,0,0,0.5)",
-            maxWidth: "80%",
-          }}
-        >
-          {title}
-        </div>
-      )}
     </AbsoluteFill>
   );
 };
 
 /**
- * Opening Sequence - Logo and intro
+ * Opening sequence with logo
  */
 const OpeningSequence: React.FC = () => {
-  const frame = useCurrentFrame();
-  const opacity = interpolate(frame, [0, 15], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
+  const { frame } = useVideoConfig();
+  const openingDuration = 120; // 4 seconds at 30fps
 
-  const scale = interpolate(frame, [0, 30], [0.9, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
+  // Logo appears and scales up
+  const scale = interpolate(
+    frame,
+    [0, openingDuration / 2],
+    [0.5, 1.2],
+    {
+      easing: Easing.out(Easing.cubic),
+      extrapolateRight: "clamp",
+    }
+  );
+
+  // Logo fades in
+  const opacity = interpolate(
+    frame,
+    [0, 30, openingDuration - 30, openingDuration],
+    [0, 1, 1, 0],
+    {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+    }
+  );
 
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: "linear-gradient(135deg, #0b2b4d 0%, #1a4d7a 100%)",
+        backgroundColor: "#0f172a",
         display: "flex",
-        justifyContent: "center",
         alignItems: "center",
+        justifyContent: "center",
         flexDirection: "column",
-        color: "white",
+        gap: 20,
       }}
     >
       <div
         style={{
-          fontSize: 64,
-          fontWeight: "bold",
           opacity,
           transform: `scale(${scale})`,
-          marginBottom: 20,
+          fontSize: 72,
+          fontWeight: "bold",
+          color: "#fff",
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          letterSpacing: -2,
         }}
       >
         Logisphere
       </div>
       <div
         style={{
+          opacity,
           fontSize: 24,
-          color: "#f2a94a",
-          opacity: Math.max(0, opacity - 0.5),
+          color: "#94a3b8",
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          fontWeight: 300,
         }}
       >
-        Logistics Management Platform
+        Freight Intelligence Platform
       </div>
     </AbsoluteFill>
   );
 };
 
 /**
- * Closing Sequence - Call to action
+ * Closing sequence with call-to-action
  */
 const ClosingSequence: React.FC = () => {
-  const frame = useCurrentFrame();
+  const { frame } = useVideoConfig();
+
+  const opacity = interpolate(
+    frame,
+    [0, 30, 180, 210],
+    [0, 1, 1, 0],
+    {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+    }
+  );
 
   return (
     <AbsoluteFill
       style={{
-        backgroundColor: "linear-gradient(135deg, #0b2b4d 0%, #1a4d7a 100%)",
+        backgroundColor: "#0f172a",
         display: "flex",
-        justifyContent: "center",
         alignItems: "center",
+        justifyContent: "center",
         flexDirection: "column",
-        color: "white",
-        fontSize: 32,
+        gap: 30,
       }}
     >
-      <h1 style={{ fontSize: 56, marginBottom: 30 }}>Ready to Transform?</h1>
-      <p style={{ fontSize: 28, color: "#f2a94a", marginBottom: 50 }}>
-        Get started with Logisphere today
-      </p>
-      <div style={{ fontSize: 24 }}>Visit logisphere.io to learn more</div>
+      <div
+        style={{
+          opacity,
+          fontSize: 56,
+          fontWeight: "bold",
+          color: "#fff",
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          textAlign: "center",
+          maxWidth: "90%",
+        }}
+      >
+        Ready to Transform Your Logistics?
+      </div>
+      <div
+        style={{
+          opacity,
+          fontSize: 20,
+          color: "#cbd5e1",
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          textAlign: "center",
+          maxWidth: "80%",
+          lineHeight: 1.6,
+        }}
+      >
+        Get real-time visibility, predictive analytics, and automated compliance
+        monitoring.
+      </div>
+      <div
+        style={{
+          opacity,
+          fontSize: 18,
+          color: "#60a5fa",
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          marginTop: 20,
+        }}
+      >
+        Start your free trial today
+      </div>
     </AbsoluteFill>
   );
 };
 
 /**
- * Main Video Composition
+ * Main video composition
  */
-export const VideoComposition: React.FC = () => {
-  let currentFrame = 0;
-  const fps = 30;
+export const LogisphereWalkthrough: React.FC = () => {
+  const screenshotFrames = metadata.frames;
+
+  // Calculate frame range for each screenshot
+  const getFramesByIndex = (
+    index: number
+  ): { from: number; to: number; count: number } => {
+    const current = screenshotFrames[index];
+    const next = screenshotFrames[index + 1];
+
+    const from = index === 0 ? 0 : screenshotFrames[index - 1].frameIndex + 1;
+    const to = next ? next.frameIndex : metadata.totalFrames;
+
+    return { from, to, count: to - from };
+  };
+
+  const openingDuration = 120; // 4 seconds
+  const contentDuration = metadata.totalFrames;
+  const closingDuration = 210; // 7 seconds
+  const totalDuration = openingDuration + contentDuration + closingDuration;
 
   return (
-    <>
+    <AbsoluteFill style={{ backgroundColor: "#000" }}>
       {/* Opening */}
-      <Sequence from={0} durationInFrames={150}>
+      <Sequence from={0} durationInFrames={openingDuration}>
         <OpeningSequence />
       </Sequence>
 
-      {/* Page screenshots */}
-      {metadata.pages.map((page, pageIndex) => {
-        const pageFrames = metadata.frames.filter(
-          (_, i) => i >= currentFrame && i < currentFrame + page.frameCount
-        );
-        const sequenceStart = currentFrame;
+      {/* Content - Screenshots */}
+      <Sequence from={openingDuration} durationInFrames={contentDuration}>
+        {screenshotFrames.map((frame, index) => {
+          const { from, to } = getFramesByIndex(index);
 
-        let frameOffset = 0;
-        const elements = pageFrames.map((frame, frameIndex) => {
-          const frameDuration = frame.duration * fps;
-          const sequenceStart = frameOffset;
-          frameOffset += frameDuration;
+          if (to - from <= 0) return null;
+
+          const screenshotPath = path.join(
+            screenshotDir,
+            `${String(Math.floor(index / 1000))
+              .padStart(2, "0")}_${String(index % 1000)
+              .padStart(3, "0")}.png`
+          );
+
+          // Determine if this is likely the last frame of a page
+          const isPageEnd =
+            index === screenshotFrames.length - 1 ||
+            screenshotFrames[index + 1]?.page !== frame.page;
 
           return (
             <Sequence
-              key={`${pageIndex}-${frameIndex}`}
-              from={sequenceStart}
-              durationInFrames={frameDuration}
+              key={index}
+              from={frame.frameIndex - openingDuration}
+              durationInFrames={to - from}
             >
               <ScreenshotFrame
-                imagePath={frame.imagePath}
-                duration={frame.duration}
-                title={frameIndex === 0 ? page.title : undefined}
+                imagePath={screenshotPath}
+                fadeInFrames={isPageEnd ? 10 : 5}
+                fadeOutFrames={isPageEnd ? 15 : 0}
               />
             </Sequence>
           );
-        });
-
-        currentFrame += page.frameCount;
-        return <React.Fragment key={`page-${pageIndex}`}>{elements}</React.Fragment>;
-      })}
+        })}
+      </Sequence>
 
       {/* Closing */}
-      <Sequence from={currentFrame} durationInFrames={120}>
+      <Sequence
+        from={openingDuration + contentDuration}
+        durationInFrames={closingDuration}
+      >
         <ClosingSequence />
       </Sequence>
-    </>
+    </AbsoluteFill>
   );
 };
 
-/**
- * Register Composition with Remotion
- * This is called by Remotion's renderer
- */
-export const registerComposition = () => {
-  const totalFrames = Math.ceil(
-    (metadata.totalDuration + 4 + 4) * 30 // +4s for opening and closing
-  );
-
-  Composition({
-    id: "LogisphereWalkthrough",
-    component: VideoComposition,
-    durationInFrames: totalFrames,
-    fps: 30,
-    width: metadata.resolution.width,
-    height: metadata.resolution.height,
-    defaultProps: {},
-  });
+export const fps = 30;
+export const width = 1280;
+export const height = 720;
+export const durationInFrames = Math.ceil(
+  (metadata.totalFrames / 30 + 4 + 7) * 30
+);
+export const defaultProps = {
+  duration: durationInFrames,
 };
-
-// Export for Remotion
-export default VideoComposition;
